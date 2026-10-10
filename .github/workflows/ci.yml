@@ -23,7 +23,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
           pip install -e .
-      - name: Lint
-        run: ruff check src tests
+      - name: Lint and format check
+        run: |
+          ruff check src tests
+          ruff format --check src tests
       - name: Test
         run: pytest
+      - name: Verify CLI & Demo
+        run: |
+          supply-twin --help
+          python scripts/run_demo.py

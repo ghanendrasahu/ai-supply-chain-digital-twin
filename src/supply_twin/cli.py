@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import json
+import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import typer
 from rich.console import Console
