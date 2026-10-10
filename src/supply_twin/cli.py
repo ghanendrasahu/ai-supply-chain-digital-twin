@@ -139,6 +139,19 @@ def serve(host: str = "0.0.0.0", port: int = 8000) -> None:
     uvicorn.run("supply_twin.api.main:app", host=host, port=port, reload=False)
 
 
+@app.command("ui")
+def ui(port: int = 8501) -> None:
+    """Launch the interactive Streamlit web dashboard."""
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    app_path = Path(__file__).parent / "ui" / "app.py"
+    subprocess.run(
+        [sys.executable, "-m", "streamlit", "run", str(app_path), "--server.port", str(port)]
+    )
+
+
 def _build_intervention(
     event: str,
     supplier: str = "SUP-A",

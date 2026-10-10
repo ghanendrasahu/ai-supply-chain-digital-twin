@@ -55,9 +55,15 @@ Revenue impact -₹2.7Cr
    - Monte-Carlo uncertainty bands (p10, p50, p90, mean).
    - Multi-event support: supplier failure, factory outage, demand shock, transport delays, price changes.
 
-6. **Production Interfaces**
+6. **Prescriptive AI Mitigation Advisor**
+   - Automated counterfactual evaluation of response playbooks (secondary supplier expediting, safety buffer shifts, demand shaping).
+   - Ranked mitigation recommendations sorted by Net Recovered Benefit, ROI multiple, and implementation feasibility.
+
+7. **Production Interfaces & Web UI**
+   - **Streamlit Web Dashboard**: Interactive simulation console, dynamic consequence chain cards, and mitigation playbook generator.
    - **FastAPI** REST backend with OpenAPI/Swagger docs at `/docs`.
-   - **Typer & Rich** CLI (`supply-twin demo`, `supply-twin simulate`, `supply-twin forecast`, etc.).
+   - **ERP Connectors**: Ingestion schemas and validators for CSV and JSON enterprise payloads.
+   - **Typer & Rich** CLI (`supply-twin demo`, `supply-twin simulate`, `supply-twin ui`, etc.).
    - Headless automated report generation with Markdown and Matplotlib charts.
    - Docker & Docker Compose setup.
 
@@ -82,7 +88,14 @@ pip install -r requirements-dev.txt
 pip install -e .
 ```
 
-### 2. Run the Headline What-If Demo
+### 2. Launch Interactive Streamlit UI
+
+```bash
+supply-twin ui
+# or: streamlit run src/supply_twin/ui/app.py
+```
+
+### 3. Run the Headline What-If Demo
 
 ```bash
 python scripts/run_demo.py

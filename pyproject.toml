@@ -27,6 +27,7 @@ dependencies = [
     "matplotlib>=3.8",
     "typer>=0.12",
     "rich>=13.7",
+    "streamlit>=1.30",
 ]
 
 [project.optional-dependencies]
