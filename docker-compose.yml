@@ -1,0 +1,15 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - SUPPLY_TWIN_RANDOM_SEED=42
+      - SUPPLY_TWIN_MONTE_CARLO_RUNS=1000
+      - SUPPLY_TWIN_DATA_DIR=/app/data
+      - SUPPLY_TWIN_REPORT_DIR=/app/data/reports
+    volumes:
+      - twin-data:/app/data
+
+volumes:
+  twin-data:
