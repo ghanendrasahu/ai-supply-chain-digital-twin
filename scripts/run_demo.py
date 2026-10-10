@@ -1,14 +1,15 @@
-"""End-to-end demo: the canonical₹2.7Cr supplier-failure scenario."""
+"""End-to-end demo: the canonical ₹2.7Cr supplier-failure scenario."""
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 from rich.console import Console
+
+_reconfig = getattr(sys.stdout, "reconfigure", None)
+if callable(_reconfig):
+    _reconfig(encoding="utf-8", errors="replace")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -26,8 +27,10 @@ def main() -> int:
     twin = SupplyChainTwin(settings=settings)
 
     console.rule("AI Supply Chain Digital Twin — Demo")
-    console.print("[bold cyan]Supply chain:[/bold cyan] Supplier → Factory → "
-                  "Warehouse → Distribution → Retailer → Customer")
+    console.print(
+        "[bold cyan]Supply chain:[/bold cyan] Supplier → Factory → "
+        "Warehouse → Distribution → Retailer → Customer"
+    )
 
     result = twin.what_if(
         interventions=[SupplierFailure(supplier_id="SUP-A", duration_days=14)],

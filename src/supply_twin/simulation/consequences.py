@@ -13,7 +13,8 @@ Canonical headline for the demo scenario:
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
+from typing import Literal
 
 import numpy as np
 
@@ -32,7 +33,7 @@ SimulatorFactory = Callable[[int], TwinSimulator]
 _EPS = 1e-9
 
 
-def _intervention_window(interventions: list, horizon: int) -> tuple[int, int]:
+def _intervention_window(interventions: Sequence, horizon: int) -> tuple[int, int]:
     starts: list[int] = []
     ends: list[int] = []
     for iv in interventions:
@@ -73,7 +74,7 @@ class ConsequenceEngine:
 
     # -- single paired evaluation ----------------------------------------
     def _paired(
-        self, interventions: list, horizon: int, seed: int
+        self, interventions: Sequence, horizon: int, seed: int
     ) -> tuple[list[KPISnapshot], list[KPISnapshot], dict[str, float]]:
         sim = self.simulator_factory(seed)
         baseline = sim.run([], horizon=horizon, seed=seed)
@@ -117,7 +118,7 @@ class ConsequenceEngine:
     # -- full evaluation with Monte-Carlo ---------------------------------
     def evaluate(
         self,
-        interventions: list,
+        interventions: Sequence,
         horizon: int | None = None,
         n_runs: int | None = None,
         seed: int | None = None,
@@ -222,7 +223,7 @@ def _pct(scenario: float, baseline: float) -> float:
     return (scenario - baseline) / baseline * 100.0
 
 
-def _dir(value: float) -> str:
+def _dir(value: float) -> Literal["up", "down", "flat"]:
     if value > 1e-6:
         return "up"
     if value < -1e-6:

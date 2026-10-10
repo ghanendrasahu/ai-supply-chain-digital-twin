@@ -15,6 +15,7 @@ from supply_twin.api.deps import (
 from supply_twin.config import Settings
 from supply_twin.reporting.report import build_report, render_markdown
 from supply_twin.schemas import (
+    DemandPoint,
     DemandSeries,
     Intervention,
     KPISnapshot,
@@ -62,7 +63,7 @@ def demand_forecast(
         node_id=result.node_id,
         sku=result.sku,
         points=[
-            {"day": d, "quantity": float(q)}
+            DemandPoint(day=d, quantity=float(q))
             for d, q in zip(result.dates, result.forecast, strict=False)
         ],
     )

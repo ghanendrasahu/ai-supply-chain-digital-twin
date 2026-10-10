@@ -7,6 +7,7 @@ drop-in object used by the API, the CLI and the demo script.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import date
 
 import numpy as np
@@ -89,7 +90,7 @@ class SupplyChainTwin:
     # -- public operations ------------------------------------------------
     def run(
         self,
-        interventions: list[Intervention] | None = None,
+        interventions: Sequence[Intervention] | None = None,
         horizon: int | None = None,
         seed: int | None = None,
     ) -> list[KPISnapshot]:
@@ -97,7 +98,7 @@ class SupplyChainTwin:
 
     def what_if(
         self,
-        interventions: list[Intervention],
+        interventions: Sequence[Intervention],
         horizon: int | None = None,
         n_runs: int | None = None,
         seed: int | None = None,

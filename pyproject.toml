@@ -48,11 +48,16 @@ where = ["src"]
 pythonpath = ["src"]
 testpaths = ["tests"]
 addopts = "-q --cov=supply_twin --cov-report=term-missing --cov-report=xml"
+filterwarnings = [
+    "ignore:.*starlette.*:UserWarning",
+    "ignore:.*starlette.*:DeprecationWarning",
+    "ignore:.*httpx.*:DeprecationWarning",
+]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-src = ["src", "tests"]
+src = ["src", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "W"]

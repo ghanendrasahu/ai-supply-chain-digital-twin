@@ -23,13 +23,18 @@ _CMAP = {"baseline": "#1f77b4", "scenario": "#d62728"}
 def consequence_summary(result: SimulationResult) -> dict[str, float | str]:
     chain = result.consequence_chain
     steps = {s.metric: s for s in chain.steps}
+
+    def _impact(metric: str) -> float:
+        step = steps.get(metric)
+        return step.impact_value if step is not None else 0.0
+
     return {
         "intervention": chain.intervention,
         "chain": chain.headline(),
-        "production_delta_pct": steps.get("Production").impact_value,
-        "inventory_delta_pct": steps.get("Inventory").impact_value,
-        "stockout_delta_pct": steps.get("Stockout probability").impact_value,
-        "revenue_impact": steps.get("Revenue").impact_value,
+        "production_delta_pct": _impact("Production"),
+        "inventory_delta_pct": _impact("Inventory"),
+        "stockout_delta_pct": _impact("Stockout probability"),
+        "revenue_impact": _impact("Revenue"),
         "horizon_days": result.horizon_days,
         "n_runs": result.n_runs,
         "run_id": result.run_id,

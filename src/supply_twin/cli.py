@@ -5,9 +5,6 @@ from __future__ import annotations
 import json
 import sys
 
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -22,6 +19,10 @@ from supply_twin.schemas import (
     TransportDelay,
 )
 from supply_twin.twin import SupplyChainTwin
+
+_reconfig = getattr(sys.stdout, "reconfigure", None)
+if callable(_reconfig):
+    _reconfig(encoding="utf-8", errors="replace")
 
 app = typer.Typer(help="AI Supply Chain Digital Twin CLI")
 console = Console()

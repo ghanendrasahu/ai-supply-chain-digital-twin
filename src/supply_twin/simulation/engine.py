@@ -13,6 +13,7 @@ is fully deterministic given a seed and its inputs.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -72,7 +73,7 @@ class _InterventionEffects:
 
     supplier_availability: dict[str, np.ndarray] = field(default_factory=dict)
     factory_availability: dict[str, np.ndarray] = field(default_factory=dict)
-    demand_multiplier: np.ndarray | None = None
+    demand_multiplier: np.ndarray = field(default_factory=lambda: np.ones(1))
     lane_delay: dict[tuple[str, str], float] = field(default_factory=dict)
     price_multiplier: dict[str, float] = field(default_factory=dict)
 
@@ -120,7 +121,7 @@ class TwinSimulator:
 
     # -- intervention effects --------------------------------------------
     def _build_effects(
-        self, interventions: list[Intervention], horizon: int
+        self, interventions: Sequence[Intervention], horizon: int
     ) -> _InterventionEffects:
         eff = _InterventionEffects()
         eff.demand_multiplier = np.ones(horizon)
@@ -192,7 +193,7 @@ class TwinSimulator:
     # -- run --------------------------------------------------------------
     def run(
         self,
-        interventions: list[Intervention] | None = None,
+        interventions: Sequence[Intervention] | None = None,
         horizon: int | None = None,
         seed: int | None = None,
     ) -> list[KPISnapshot]:

@@ -57,17 +57,18 @@ class CSVERPConnector(BaseERPConnector):
 
 class JSONERPConnector(BaseERPConnector):
     def _read_data(self, source: SourceType) -> dict | list:
-        if isinstance(source, (str, Path)) and Path(str(source)).exists():
-            with open(source, encoding="utf-8") as f:
-                return json.load(f)
-        if hasattr(source, "read"):
-            content = source.read()
-            if isinstance(content, bytes):
-                content = content.decode("utf-8")
-            return json.loads(content)
         if isinstance(source, str):
+            if Path(source).exists():
+                return json.loads(Path(source).read_text(encoding="utf-8"))
             return json.loads(source)
-        raise ValueError(f"Unsupported source format: {type(source)}")
+        if isinstance(source, Path):
+            if source.exists():
+                return json.loads(source.read_text(encoding="utf-8"))
+            raise ValueError(f"File not found: {source}")
+        content = source.read()
+        if isinstance(content, bytes):
+            content = content.decode("utf-8")
+        return json.loads(content)
 
     def load_suppliers(self, source: SourceType) -> list[ERPSupplierRecord]:
         raw = self._read_data(source)
