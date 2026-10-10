@@ -244,7 +244,7 @@ def _fmt_money(value: float, currency: str) -> str:
     return f"{sign}{symbol}{abs(crore):.1f}Cr"
 
 
-def _summarize(interventions: list) -> str:
+def _summarize(interventions: Sequence) -> str:
     if not interventions:
         return "Baseline (no intervention)"
     parts: list[str] = []
