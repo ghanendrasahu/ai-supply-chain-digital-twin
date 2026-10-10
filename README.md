@@ -2,7 +2,7 @@
 
 A production-grade, simulation-first digital twin of an end-to-end supply chain with **demand forecasting**, **inventory optimization**, and a **what-if disruption simulator** that translates operational shocks into quantified financial consequence chains.
 
-```
+```text
 Supplier ──▶ Factory ──▶ Warehouse ──▶ Distribution ──▶ Retailer ──▶ Customer
 ```
 
@@ -16,7 +16,7 @@ Ask real-world questions like:
 
 The system executes a discrete-event, multi-echelon simulation across a Monte-Carlo ensemble and produces the exact financial consequence chain:
 
-```
+```text
 Supplier failure
        ↓
 Production -18%
