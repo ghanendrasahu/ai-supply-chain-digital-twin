@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     api_keys: list[str] = []  # non-empty -> /api routes require X-API-Key
     rate_limit_window: int = Field(default=60, ge=1)
     rate_limit_max_requests: int = Field(default=60, ge=0)  # 0 disables
+    # Render/most PaaS front the app with a proxy, so request.client is the
+    # proxy. Use the last X-Forwarded-For hop (the address the trusted proxy
+    # appended) instead. Set false only when clients connect directly.
+    trust_proxy_headers: bool = True
     what_if_max_concurrent: int = Field(default=2, ge=1)
 
     data_dir: Path = Path("./data")

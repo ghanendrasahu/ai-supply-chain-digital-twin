@@ -147,3 +147,58 @@ def test_what_if_releases_semaphore():
     # After handling, the cap is fully available again.
     assert _whatif_semaphore.acquire(blocking=False)
     _whatif_semaphore.release()
+
+
+def test_rate_limit_keys_on_trusted_proxy_hop(monkeypatch: pytest.MonkeyPatch):
+    """A spoofed first X-Forwarded-For entry cannot reset the client's bucket."""
+    from supply_twin.api import rate_limit
+    from supply_twin.config import get_settings
+
+    monkeypatch.delenv("SUPPLY_TWIN_API_KEYS", raising=False)
+    monkeypatch.setenv("SUPPLY_TWIN_RATE_LIMIT_WINDOW", "60")
+    monkeypatch.setenv("SUPPLY_TWIN_RATE_LIMIT_MAX_REQUESTS", "3")
+    monkeypatch.delenv("SUPPLY_TWIN_TRUST_PROXY_HEADERS", raising=False)
+    get_settings.cache_clear()
+    try:
+        rate_limit.FixedWindowRateLimiter._instances[0]._hits.clear()
+        monkeypatch.setattr(rate_limit, "_clock", lambda: 1000.0)
+        client = _client()
+
+        for spoof in ("a", "b", "c"):
+            resp = client.get("/health", headers={"X-Forwarded-For": f"{spoof}, 203.0.113.9"})
+            assert resp.status_code == 200
+        blocked = client.get("/health", headers={"X-Forwarded-For": "d, 203.0.113.9"})
+        assert blocked.status_code == 429
+
+        # A genuinely different client keeps its own bucket.
+        other = client.get("/health", headers={"X-Forwarded-For": "e, 203.0.113.10"})
+        assert other.status_code == 200
+    finally:
+        get_settings.cache_clear()
+
+
+def test_rate_limit_can_ignore_proxy_header(monkeypatch: pytest.MonkeyPatch):
+    from supply_twin.api import rate_limit
+    from supply_twin.config import get_settings
+
+    monkeypatch.delenv("SUPPLY_TWIN_API_KEYS", raising=False)
+    monkeypatch.setenv("SUPPLY_TWIN_RATE_LIMIT_WINDOW", "60")
+    monkeypatch.setenv("SUPPLY_TWIN_RATE_LIMIT_MAX_REQUESTS", "2")
+    monkeypatch.setenv("SUPPLY_TWIN_TRUST_PROXY_HEADERS", "false")
+    get_settings.cache_clear()
+    try:
+        rate_limit.FixedWindowRateLimiter._instances[0]._hits.clear()
+        monkeypatch.setattr(rate_limit, "_clock", lambda: 1000.0)
+        client = _client()
+
+        assert (
+            client.get("/health", headers={"X-Forwarded-For": "a, 203.0.113.1"}).status_code == 200
+        )
+        assert (
+            client.get("/health", headers={"X-Forwarded-For": "b, 203.0.113.2"}).status_code == 200
+        )
+        assert (
+            client.get("/health", headers={"X-Forwarded-For": "c, 203.0.113.3"}).status_code == 429
+        )
+    finally:
+        get_settings.cache_clear()

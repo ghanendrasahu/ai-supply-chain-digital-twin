@@ -35,12 +35,28 @@ class FixedWindowRateLimiter(BaseHTTPMiddleware):
         settings = get_settings()
         return settings.rate_limit_window, settings.rate_limit_max_requests
 
+    def _client_key(self, request: Request) -> str:
+        """Identify the real client behind a trusted reverse proxy.
+
+        The last X-Forwarded-For entry is the one the trusted proxy appended;
+        earlier entries are client-supplied and must not be trusted.
+        """
+        from supply_twin.config import get_settings
+
+        if get_settings().trust_proxy_headers:
+            forwarded = request.headers.get("x-forwarded-for", "")
+            if forwarded:
+                candidate = forwarded.split(",")[-1].strip()
+                if candidate:
+                    return candidate
+        return request.client.host if request.client else "unknown"
+
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         window, max_requests = self._limits()
         if max_requests <= 0:  # limiter disabled
             return await call_next(request)
 
-        client = request.client.host if request.client else "unknown"
+        client = self._client_key(request)
         now = _clock()
         active = [t for t in self._hits[client] if now - t < window]
         self._hits[client] = active
