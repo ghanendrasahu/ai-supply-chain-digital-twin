@@ -1,0 +1,14 @@
+# Render blueprint for ai-supply-chain-digital-twin.
+# Mirrors the live service configuration; inert until an explicit Blueprint Sync.
+# Secret values are declared with sync:false and stay in the Render dashboard.
+services:
+- type: web
+  name: supply-chain-digital-twin-app
+  runtime: python
+  plan: free
+  region: oregon
+  branch: main
+  buildCommand: pip install -r requirements.txt && pip install --no-deps -e .
+  startCommand: sh -c "streamlit run src/supply_twin/ui/app.py --server.port=${PORT:-10000} --server.address=0.0.0.0 --server.headless=true"
+  healthCheckPath: /_stcore/health
+  autoDeploy: true
