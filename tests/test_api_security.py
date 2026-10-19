@@ -23,6 +23,16 @@ def test_health_always_public(_keys_enabled):
     assert client.get("/health").status_code == 200
 
 
+def test_security_headers_on_health(_keys_enabled):
+    client = TestClient(app)
+    resp = client.get("/health")
+    assert resp.headers["x-content-type-options"] == "nosniff"
+    assert resp.headers["x-frame-options"] == "DENY"
+    assert resp.headers["referrer-policy"] == "strict-origin-when-cross-origin"
+    assert resp.headers["permissions-policy"] == "camera=(), microphone=(), geolocation=()"
+    assert resp.headers["strict-transport-security"].startswith("max-age=")
+
+
 def test_api_401_without_key(_keys_enabled):
     client = TestClient(app)
     assert client.get("/skus").status_code == 401
