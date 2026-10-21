@@ -69,3 +69,4 @@ omit = ["*/cli.py", "*/api/main.py"]
 
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:", "raise NotImplementedError"]
+fail_under = 85
