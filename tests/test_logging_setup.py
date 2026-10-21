@@ -1,4 +1,5 @@
 """Tests for the logging bootstrap (supply_twin.logging_setup)."""
+
 from __future__ import annotations
 
 import json
@@ -11,8 +12,13 @@ from supply_twin.logging_setup import JsonFormatter, configure_logging
 def test_json_formatter_emits_parseable_record():
     formatter = JsonFormatter()
     record = logging.LogRecord(
-        name="supply_twin.api", level=logging.INFO, pathname=__file__, lineno=1,
-        msg="what-if complete", args=(), exc_info=None,
+        name="supply_twin.api",
+        level=logging.INFO,
+        pathname=__file__,
+        lineno=1,
+        msg="what-if complete",
+        args=(),
+        exc_info=None,
     )
     record.run_id = "run-123"  # type: ignore[attr-defined]
     payload = json.loads(formatter.format(record))
@@ -29,8 +35,13 @@ def test_json_formatter_includes_exception():
         raise RuntimeError("sim crashed")
     except RuntimeError:
         record = logging.LogRecord(
-            name="supply_twin.api", level=logging.ERROR, pathname=__file__, lineno=1,
-            msg="handled", args=(), exc_info=sys.exc_info(),
+            name="supply_twin.api",
+            level=logging.ERROR,
+            pathname=__file__,
+            lineno=1,
+            msg="handled",
+            args=(),
+            exc_info=sys.exc_info(),
         )
     payload = json.loads(formatter.format(record))
     assert "RuntimeError: sim crashed" in payload["exception"]

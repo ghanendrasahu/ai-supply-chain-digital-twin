@@ -4,6 +4,7 @@ Configures stdlib logging once per process with either human-readable console
 records or machine-parseable single-line JSON (for aggregators), according to
 ``Settings.log_json`` / ``Settings.log_level``.
 """
+
 from __future__ import annotations
 
 import json
@@ -11,12 +12,34 @@ import logging
 import sys
 from datetime import UTC, datetime
 
-_RESERVED_ATTRS = frozenset({
-    "args", "asctime", "created", "exc_info", "exc_text", "filename",
-    "funcName", "levelname", "levelno", "lineno", "module", "msecs", "message",
-    "msg", "name", "pathname", "process", "processName", "relativeCreated",
-    "stack_info", "stacklevel", "thread", "threadName", "taskName",
-})
+_RESERVED_ATTRS = frozenset(
+    {
+        "args",
+        "asctime",
+        "created",
+        "exc_info",
+        "exc_text",
+        "filename",
+        "funcName",
+        "levelname",
+        "levelno",
+        "lineno",
+        "module",
+        "msecs",
+        "message",
+        "msg",
+        "name",
+        "pathname",
+        "process",
+        "processName",
+        "relativeCreated",
+        "stack_info",
+        "stacklevel",
+        "thread",
+        "threadName",
+        "taskName",
+    }
+)
 
 
 class JsonFormatter(logging.Formatter):
