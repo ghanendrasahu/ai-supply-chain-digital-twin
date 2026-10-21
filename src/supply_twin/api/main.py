@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import logging
+import secrets
 from contextlib import asynccontextmanager
+from threading import BoundedSemaphore
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 
 from supply_twin.api.deps import (
     get_result,
@@ -14,6 +16,7 @@ from supply_twin.api.deps import (
     get_twin,
     store_result,
 )
+from supply_twin.api.rate_limit import FixedWindowRateLimiter
 from supply_twin.config import Settings
 from supply_twin.logging_setup import configure_logging
 from supply_twin.reporting.report import build_report, render_markdown
@@ -28,16 +31,37 @@ from supply_twin.twin import SupplyChainTwin
 
 logger = logging.getLogger("supply_twin.api")
 
+# Health/docs stay probe-accessible; everything else may require a key.
+_PUBLIC_PATHS = frozenset({"/health", "/docs", "/redoc", "/openapi.json"})
+
+
+def require_api_key(request: Request, x_api_key: Annotated[str | None, Header()] = None) -> None:
+    """Gate every route unless ``api_keys`` is empty (auth off) or public."""
+    keys = get_settings_dep().api_keys
+    if not keys or request.url.path in _PUBLIC_PATHS:
+        return
+    if not x_api_key or not any(
+        secrets.compare_digest(x_api_key.encode(), key.encode()) for key in keys
+    ):
+        logger.warning("rejected client: invalid or missing API key path=%s", request.url.path)
+        raise HTTPException(status_code=401, detail="Missing or invalid API key")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings_dep()
     configure_logging(json_logs=settings.log_json, level=settings.log_level)
-    logger.info("starting supply-twin v%s (env=%s log_json=%s)",
-                app.version, settings.env, settings.log_json)
+    logger.info(
+        "starting supply-twin v%s (env=%s log_json=%s)",
+        app.version,
+        settings.env,
+        settings.log_json,
+    )
     logger.info(
         "bounds: horizon_days=%d monte_carlo_runs=%d default_service_level=%s",
-        settings.horizon_days, settings.monte_carlo_runs, settings.default_service_level,
+        settings.horizon_days,
+        settings.monte_carlo_runs,
+        settings.default_service_level,
     )
     yield
     logger.info("shutdown")
@@ -50,7 +74,11 @@ app = FastAPI(
     "Retailer→Customer chain.",
     version="0.1.0",
     lifespan=lifespan,
+    dependencies=[Depends(require_api_key)],
 )
+
+# CPU protection: per-client request quota (worker-local by design).
+app.add_middleware(FixedWindowRateLimiter)
 
 
 @app.get("/health", tags=["system"])
@@ -110,6 +138,11 @@ def current_kpis(twin: Annotated[SupplyChainTwin, Depends(get_twin)]) -> dict[st
     return twin.kpis()
 
 
+# CPU-bound simulations run in the thread pool; bound their concurrency so a
+# client cannot saturate the worker with parallel 20k-run Monte Carlos.
+_whatif_semaphore = BoundedSemaphore(get_settings_dep().what_if_max_concurrent)
+
+
 @app.post("/simulate/what-if", tags=["simulation"])
 def what_if(
     interventions: list[Intervention],
@@ -119,22 +152,32 @@ def what_if(
     n_runs: int | None = Query(default=None, ge=1, le=20000),
     label: str | None = None,
 ) -> SimulationResult:
-    result = twin.what_if(
-        interventions=interventions,
-        horizon=horizon,
-        n_runs=n_runs,
-        label=label,
-    )
-    store_result(result)
-    logger.info(
-        "what-if complete: run_id=%s horizon=%d n_runs=%d interventions=%d",
-        result.run_id, horizon or settings.horizon_days,
-        n_runs or settings.monte_carlo_runs, len(interventions),
-    )
+    if not _whatif_semaphore.acquire(blocking=False):
+        logger.warning(
+            "what-if rejected: concurrency cap %d reached", settings.what_if_max_concurrent
+        )
+        raise HTTPException(status_code=503, detail="Simulator busy; retry shortly")
+    try:
+        result = twin.what_if(
+            interventions=interventions,
+            horizon=horizon,
+            n_runs=n_runs,
+            label=label,
+        )
+        store_result(result)
+        logger.info(
+            "what-if complete: run_id=%s horizon=%d n_runs=%d interventions=%d",
+            result.run_id,
+            horizon or settings.horizon_days,
+            n_runs or settings.monte_carlo_runs,
+            len(interventions),
+        )
 
-    settings.ensure_dirs()
-    build_report(result, settings, settings.report_dir, kpis=twin.kpis())
-    logger.info("report generated for run_id=%s", result.run_id)
+        settings.ensure_dirs()
+        build_report(result, settings, settings.report_dir, kpis=twin.kpis())
+        logger.info("report generated for run_id=%s", result.run_id)
+    finally:
+        _whatif_semaphore.release()
     return result
 
 

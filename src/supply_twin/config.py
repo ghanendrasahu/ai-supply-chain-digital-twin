@@ -10,7 +10,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     log_json: bool = False
     log_level: str = "INFO"
 
+    # HTTP exposure & limits
+    api_keys: list[str] = []  # non-empty -> /api routes require X-API-Key
+    rate_limit_window: int = Field(default=60, ge=1)
+    rate_limit_max_requests: int = Field(default=60, ge=0)  # 0 disables
+    what_if_max_concurrent: int = Field(default=2, ge=1)
+
     data_dir: Path = Path("./data")
     report_dir: Path = Path("./data/reports")
 
@@ -48,6 +54,18 @@ class Settings(BaseSettings):
     churn_multiplier: float = Field(default=3.2, gt=0.0)
     # Baseline (no-disruption) revenue per day used by the revenue model.
     baseline_daily_revenue: float = Field(default=1_250_000.0, gt=0.0)
+
+    @field_validator("api_keys", mode="before")
+    @classmethod
+    def _accept_env_list(cls, value: object) -> object:
+        """Accept '' / comma-separated / JSON-array env values for api_keys."""
+        if isinstance(value, str):
+            text = value.strip()
+            if not text:
+                return []
+            if not text.startswith("["):
+                return [item.strip() for item in text.split(",") if item.strip()]
+        return value
 
     def ensure_dirs(self) -> None:
         """Create data/report directories if they do not exist."""
