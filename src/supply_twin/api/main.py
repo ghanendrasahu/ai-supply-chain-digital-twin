@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Query
@@ -13,6 +15,7 @@ from supply_twin.api.deps import (
     store_result,
 )
 from supply_twin.config import Settings
+from supply_twin.logging_setup import configure_logging
 from supply_twin.reporting.report import build_report, render_markdown
 from supply_twin.schemas import (
     DemandPoint,
@@ -23,12 +26,30 @@ from supply_twin.schemas import (
 )
 from supply_twin.twin import SupplyChainTwin
 
+logger = logging.getLogger("supply_twin.api")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    settings = get_settings_dep()
+    configure_logging(json_logs=settings.log_json, level=settings.log_level)
+    logger.info("starting supply-twin v%s (env=%s log_json=%s)",
+                app.version, settings.env, settings.log_json)
+    logger.info(
+        "bounds: horizon_days=%d monte_carlo_runs=%d default_service_level=%s",
+        settings.horizon_days, settings.monte_carlo_runs, settings.default_service_level,
+    )
+    yield
+    logger.info("shutdown")
+
+
 app = FastAPI(
     title="AI Supply Chain Digital Twin",
     description="Demand forecasting, inventory optimisation and a what-if "
     "disruption simulator over the Supplier→Factory→Warehouse→Distribution→"
     "Retailer→Customer chain.",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 
@@ -105,9 +126,15 @@ def what_if(
         label=label,
     )
     store_result(result)
+    logger.info(
+        "what-if complete: run_id=%s horizon=%d n_runs=%d interventions=%d",
+        result.run_id, horizon or settings.horizon_days,
+        n_runs or settings.monte_carlo_runs, len(interventions),
+    )
 
     settings.ensure_dirs()
     build_report(result, settings, settings.report_dir, kpis=twin.kpis())
+    logger.info("report generated for run_id=%s", result.run_id)
     return result
 
 

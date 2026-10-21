@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     default_service_level: float = Field(default=0.95, gt=0.5, lt=1.0)
     currency: str = "INR"
 
+    # Observability
+    log_json: bool = False
+    log_level: str = "INFO"
+
     data_dir: Path = Path("./data")
     report_dir: Path = Path("./data/reports")
 
