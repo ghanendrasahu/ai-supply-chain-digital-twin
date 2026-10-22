@@ -29,6 +29,9 @@ jobs:
           ruff format --check src tests
       - name: Test
         run: pytest
+
+      - name: Check the entry point script
+        run: bash -n setup.sh
       - name: Verify CLI & Demo
         run: |
           supply-twin --help
