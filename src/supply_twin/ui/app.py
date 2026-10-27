@@ -231,7 +231,7 @@ with tabs[0]:
             ),
         ]
 
-        for col, (title, baseline, scenario) in zip(chart_cols, series):
+        for col, (title, baseline, scenario) in zip(chart_cols, series, strict=False):
             fig, ax = plt.subplots(figsize=(5, 3.2))
             ax.plot(days_arr, baseline, label="Baseline", color=ui.PRIMARY)
             ax.plot(

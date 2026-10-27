@@ -521,9 +521,7 @@ button[data-baseweb="tab"][aria-selected="true"] {{ color: var(--ui-text) !impor
 """
 
 
-def setup(
-    page_title: str, *, icon: str | Path | None = None, layout: str = "wide"
-) -> None:
+def setup(page_title: str, *, icon: str | Path | None = None, layout: str = "wide") -> None:
     """Configure the page and inject the shared theme. Call once, first."""
     icon_value: str | None = None
     if icon is not None:
@@ -535,7 +533,7 @@ def setup(
         page_title=page_title,
         page_icon=icon_value,
         layout=layout,
-        initial_sidebar_state="expanded",
+        initial_sidebar_state="auto",
     )
     st.markdown(CSS, unsafe_allow_html=True)
 
@@ -571,9 +569,7 @@ def page_header(
     mark_html = (
         mark(42)
         if show_mark
-        else (
-            f'<span class="ui-empty-icon" style="margin:0">{svg(icon_name, 20)}</span>'
-        )
+        else (f'<span class="ui-empty-icon" style="margin:0">{svg(icon_name, 20)}</span>')
     )
     st.markdown(
         f'<div class="ui-header"><div class="ui-header-main">{mark_html}'
@@ -591,9 +587,7 @@ def section(title: str, description: str = "") -> None:
     )
 
 
-def empty_state(
-    title: str, body: str = "", *, hint: str = "", icon_name: str = "sparkles"
-) -> None:
+def empty_state(title: str, body: str = "", *, hint: str = "", icon_name: str = "sparkles") -> None:
     hint_html = f'<div class="ui-empty-hint">{hint}</div>' if hint else ""
     st.markdown(
         f'<div class="ui-empty"><span class="ui-empty-icon">{svg(icon_name, 22)}</span>'
@@ -634,8 +628,7 @@ def _metric_html(
             tone = "good" if (rising == (good_direction == "up")) else "bad"
         arrow = "arrow-up" if delta > 0 else "arrow-down"
         delta_html = (
-            f'<div class="ui-metric-delta {tone}">{svg(arrow, 13)}'
-            f"{delta:+.1f}{suffix}</div>"
+            f'<div class="ui-metric-delta {tone}">{svg(arrow, 13)}{delta:+.1f}{suffix}</div>'
         )
     caption_html = f'<div class="ui-metric-caption">{caption}</div>' if caption else ""
     return (
