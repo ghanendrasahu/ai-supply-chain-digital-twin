@@ -6,6 +6,10 @@ A production-grade, simulation-first digital twin of an end-to-end supply chain 
 Supplier ──▶ Factory ──▶ Warehouse ──▶ Distribution ──▶ Retailer ──▶ Customer
 ```
 
+> **Live demo:** https://supply-chain-digital-twin-app.onrender.com
+>
+> Free-tier hosting: the first load after idle can take 30-60 seconds.
+
 ---
 
 ## 🎯 What-If Decision Intelligence
